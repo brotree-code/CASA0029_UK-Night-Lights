@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8' />
+    <title>Spatio-Temporal Analysis of UK Night Lights</title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.9.0/mapbox-gl.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v3.9.0/mapbox-gl.css" rel="stylesheet" />
+    <style>
+        /* Global black background */
+        body { margin: 0; padding: 0; background-color: #000; }
+        #map { position: absolute; top: 0; bottom: 0; width: 100%; background-color: #000; }
+        
+        /* Control panel styling */
+        .map-overlay {
+            position: absolute; top: 20px; left: 20px;
+            background: rgba(20, 20, 20, 0.95); /* Dark frosted glass effect */
+            color: #e0e0e0; 
+            padding: 20px;
+            border-radius: 8px; 
+            border: 1px solid #444;
+            font-family: 'Helvetica Neue', Arial, sans-serif; 
+            
+            /* Panel width set to 300px for better layout */
+            width: 300px; 
+            
+            box-shadow: 0 4px 20px rgba(0,0,0,0.8);
+            z-index: 1;
+        }
+
+        /* Title styling */
+        h3 { 
+            margin-top: 0; 
+            margin-bottom: 15px;
+            color: #ffd700; /* Gold color for title */
+            border-bottom: 1px solid #555; 
+            padding-bottom: 10px; 
+            font-size: 18px; 
+            line-height: 1.4;
+            font-weight: bold;
+        }
+
+        /* Button styling */
+        .city-btn {
+            display: inline-block; 
+            margin: 4px 2px; 
+            padding: 8px 12px; 
+            background: #333; 
+            color: #ccc; 
+            text-decoration: none; 
+            border: 1px solid #555;
+            font-size: 12px; 
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+        .city-btn:hover { 
+            background: #ffd700; 
+            color: #000; 
+            border-color: #ffd700; 
+            font-weight: bold;
+        }
+
+        /* Data source link styling */
+        .source-link {
+            color: #888;
+            text-decoration: none;
+            border-bottom: 1px dotted #666;
+            transition: color 0.2s;
+            font-size: 11px;
+            display: block; 
+            margin-top: 5px;
+        }
+        .source-link:hover {
+            color: #ffd700;
+            border-bottom: 1px solid #ffd700;
+        }
+
+        /* Divider line */
+        .divider {
+            border-top: 1px solid #444;
+            margin: 15px 0;
+        }
+        
+        /* Radio button group styling */
+        .radio-group label {
+            cursor: pointer;
+            font-size: 14px;
+            margin-left: 5px;
+        }
+        .radio-group input {
+            accent-color: #ffd700;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<div id='map'></div>
+
+<div class='map-overlay'>
+    <h3>Spatio-Temporal Analysis<br><span style="font-size:13px; color:#ccc; font-weight:normal;">UK Night Lights (2015 vs 2021)</span></h3>
+    
+    <div class="radio-group" style="margin-bottom: 15px;">
+        <input type="radio" id="2015" name="year"> 
+        <label for="2015">2015 Annual Composite</label><br>
+        
+        <input type="radio" id="2021" name="year" checked> 
+        <label for="2021">2021 Annual Composite</label>
+    </div>
+
+    <div class="divider"></div>
+
+    <div>
+        <div style="font-size: 11px; color: #888; margin-bottom: 8px; text-transform:uppercase; letter-spacing:1px;">Zoom To Region:</div>
+        
+        <a href="#" class="city-btn" onclick="flyTo([-0.1278, 51.5074])">London</a>
+        <a href="#" class="city-btn" onclick="flyTo([-1.8904, 52.4862])">Birmingham</a>
+        <a href="#" class="city-btn" onclick="flyTo([-2.2426, 53.4808])">Manchester</a>
+        <a href="#" class="city-btn" onclick="flyTo([-1.5491, 53.8008])">Leeds</a>
+        <a href="#" class="city-btn" onclick="flyTo([-1.6178, 54.9783])">Newcastle</a>
+        <a href="#" class="city-btn" onclick="flyTo([-3.1883, 55.9533])">Edinburgh</a>
+    </div>
+
+    <div class="divider"></div>
+
+    <div style="margin-top: 10px;">
+        <a href="https://eogdata.mines.edu/products/vnl/" target="_blank" class="source-link">
+            Data Source: NOAA/EOG VIIRS Nighttime Lights V2 (Click to visit)
+        </a>
+    </div>
+</div>
+
+<script>
+    // Mapbox Access Token
+    mapboxgl.accessToken = 'pk.eyJ1Ijoic2h1cGkxMjMiLCJhIjoiY21sZGZsMGl3MHphOTNkc2FodWVta2g3NSJ9.Q4ocoKP8m4ao6DHxKzbtfw';
+
+    // Style URLs for the custom black background styles created in Mapbox Studio
+    const style_2015 = 'mapbox://styles/shupi123/cmlezexr9004j01r05a4l2nlq'; 
+    const style_2021 = 'mapbox://styles/shupi123/cmlddr0px002r01sg78o0e8s6'; 
+
+    // Initialize the map
+    var map = new mapboxgl.Map({
+        container: 'map',
+        style: style_2021, // Default to 2021 data
+        center: [-2.5, 54.0], // Centered on UK
+        zoom: 6,
+        pitch: 50,
+        antialias: true
+    });
+
+    // Add navigation controls (zoom/rotate)
+    map.addControl(new mapboxgl.NavigationControl());
+
+    // Event listeners for year selection
+    document.getElementById('2015').onclick = () => map.setStyle(style_2015);
+    document.getElementById('2021').onclick = () => map.setStyle(style_2021);
+
+    // Function to handle map movement to specific coordinates
+    function flyTo(center) {
+        map.flyTo({ 
+            center: center, 
+            zoom: 7.5,     // Zoom level set to 8.5 for a wider regional view
+            pitch: 60,     
+            speed: 0.6,    
+            curve: 1       
+        });
+    }
+</script>
+
+</body>
+</html>
